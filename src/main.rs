@@ -59,9 +59,8 @@ fn main() -> anyhow::Result<()> {
     eprintln!("{entries:#?}");
 
     eprintln!("Normalizing urls...");
-    let mut seen = std::collections::HashSet::new();
-    let entries: Vec<UrlEntry> = entries
-        .into_iter()
+    let normalized: Vec<UrlEntry> = entries
+        .into_par_iter()
         .filter_map(|e| match normalize_url(&e.url) {
             Ok(n) => Some(UrlEntry {
                 url: n,
@@ -73,6 +72,11 @@ fn main() -> anyhow::Result<()> {
                 None
             }
         })
+        .collect();
+
+    let mut seen = std::collections::HashSet::new();
+    let entries: Vec<UrlEntry> = normalized
+        .into_iter()
         .filter(|e| seen.insert(e.url.clone()))
         .collect();
 
