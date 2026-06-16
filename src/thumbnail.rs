@@ -25,7 +25,10 @@ pub fn crop_thumbnail(input: &Path, output: &Path) -> Result<()> {
     let status = Command::new("ffmpeg")
         .args(["-y", "-i"])
         .arg(input)
-        .args(["-vf", "crop='min(iw,ih)':'min(iw,ih)'"])
+        .args([
+            "-vf",
+            "scale='if(gt(a,1),-2,1080)':'if(gt(a,1),1080,-2)',crop=1080:1080",
+        ])
         .arg(output)
         .status()?;
     if !status.success() {

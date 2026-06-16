@@ -1,8 +1,6 @@
 use clap::Parser;
 use std::path::PathBuf;
 
-use crate::read_lines;
-
 #[derive(Parser)]
 pub struct Args {
     /// YouTube URL
