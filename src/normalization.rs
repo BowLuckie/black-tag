@@ -1,5 +1,7 @@
 use std::process::Command;
 
+use crate::info;
+
 pub fn normalize_title(raw: &str, artist: Option<&str>, strip_until: Option<char>) -> String {
     let mut title = raw.trim().to_string();
 
@@ -75,7 +77,7 @@ fn remove_case_insensitive(input: &str, pattern: &str) -> String {
     input.to_string()
 }
 
-pub fn normalize_url(url: &str) -> anyhow::Result<String> {
+pub fn normalize_url(url: &str, no_verbose: &bool) -> anyhow::Result<String> {
     let output = Command::new("yt-dlp")
         .args(["--no-playlist", "--print", "%(webpage_url)s", url])
         .output()?;
@@ -88,7 +90,7 @@ pub fn normalize_url(url: &str) -> anyhow::Result<String> {
         anyhow::bail!("yt-dlp returned empty output for '{url}'");
     }
 
-    eprintln!("url normalized {url} --> {cleaned}");
+    info(format!("url normalized {url} --> {cleaned}"), no_verbose);
     Ok(cleaned)
 }
 

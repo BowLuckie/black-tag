@@ -23,6 +23,9 @@ pub struct Args {
     /// parse --input-file as "url | title | artist" per line
     #[arg(long)]
     pub file_overrides: bool,
+    /// Supress yt-dlp output and process info. wont supress errors
+    #[arg(long)]
+    pub no_verbose: bool,
 }
 
 pub fn sanitize(input: &str) -> String {
@@ -33,4 +36,12 @@ pub fn sanitize(input: &str) -> String {
             _ => c,
         })
         .collect()
+}
+
+pub fn quiet_args(no_verbose: bool) -> &'static [&'static str] {
+    if no_verbose {
+        &["--quiet", "--no-warnings"]
+    } else {
+        &[]
+    }
 }

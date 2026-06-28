@@ -1,10 +1,13 @@
+use anyhow::{Result, bail};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use anyhow::{Result, bail};
 
-pub fn download_thumbnail(url: &str, dir: &Path) -> Result<PathBuf> {
+use crate::args::quiet_args;
+
+pub fn download_thumbnail(url: &str, dir: &Path, no_verbose: bool) -> Result<PathBuf> {
     let output_template = dir.join("thumb");
     let status = Command::new("yt-dlp")
+        .args(quiet_args(no_verbose))
         .args(["--skip-download", "--write-thumbnail", "-o"])
         .arg(&output_template)
         .arg(url)
@@ -21,8 +24,9 @@ pub fn download_thumbnail(url: &str, dir: &Path) -> Result<PathBuf> {
     bail!("thumbnail not found")
 }
 
-pub fn crop_thumbnail(input: &Path, output: &Path) -> Result<()> {
+pub fn crop_thumbnail(input: &Path, output: &Path, no_verbose: &bool) -> Result<()> {
     let status = Command::new("ffmpeg")
+        .args(shush_ffmpg(no_verbose))
         .args(["-y", "-i"])
         .arg(input)
         .args([
@@ -35,4 +39,12 @@ pub fn crop_thumbnail(input: &Path, output: &Path) -> Result<()> {
         bail!("thumbnail crop failed");
     }
     Ok(())
+}
+
+fn shush_ffmpg(no_verbose: &bool) -> &'static [&'static str] {
+    if *no_verbose {
+        &["-loglevel", "quiet"]
+    } else {
+        &[]
+    }
 }

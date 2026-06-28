@@ -2,6 +2,8 @@ use anyhow::{Result, bail};
 use serde::Deserialize;
 use std::process::Command;
 
+use crate::note;
+
 #[derive(Deserialize)]
 pub struct VideoInfo {
     pub title: String,
@@ -9,7 +11,10 @@ pub struct VideoInfo {
     pub channel: Option<String>,
 }
 
-pub fn video_info(url: &str) -> Result<VideoInfo> {
+pub fn video_info(url: &str, no_verbose: bool) -> Result<VideoInfo> {
+    if no_verbose {
+        note("errors will not be supressed")
+    }
     let output = Command::new("yt-dlp")
         .args(["--dump-single-json", url])
         .output()?;
@@ -20,4 +25,3 @@ pub fn video_info(url: &str) -> Result<VideoInfo> {
 
     Ok(serde_json::from_slice(&output.stdout)?)
 }
-
