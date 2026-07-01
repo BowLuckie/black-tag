@@ -18,10 +18,11 @@ use logger::Logger;
 use normalization::{normalize_title, normalize_url, sanitize, strip_noise};
 use rayon::prelude::*;
 use std::{fs, io, num::NonZero, thread};
-use tagging::tag_mp3;
 use tempfile::TempDir;
 use thumbnail::{crop_thumbnail, download_thumbnail};
 use video::video_info;
+
+use crate::downloader::tagging::VideoTagger;
 
 #[derive(Clone, Debug)]
 pub struct Downloader {
@@ -80,6 +81,7 @@ impl Downloader {
                         url,
                         title: self.args.title.clone(),
                         artist: self.args.artist.clone(),
+                        album: self.args.album.clone(),
                     })
                     .collect()
             }
@@ -88,6 +90,7 @@ impl Downloader {
                 url: url.clone(),
                 title: None,
                 artist: None,
+                album: None,
             }]
         } else {
             anyhow::bail!("provide either a url or --input-file");
@@ -102,17 +105,17 @@ impl Downloader {
             );
         }
 
-        panic!("stop!");
-
         logger.info("Normalizing urls...");
         let normalized: Vec<UrlEntry> = entries
             .into_par_iter()
             .filter_map(|e| match normalize_url(&e.url, logger) {
-                Ok(n) => Some(UrlEntry {
-                    url: n,
+                Ok(normal_url) => Some(UrlEntry {
+                    url: normal_url,
                     title: e.title,
                     artist: e.artist,
+                    album: e.album,
                 }),
+
                 Err(err) => {
                     logger.info(format!("failed to normalize {}: {err}", e.url));
                     None
@@ -177,13 +180,24 @@ impl UrlEntry {
         title = normalize_title(&title, Some(artist.as_str()), args.strip_until);
         title = strip_noise(&title);
 
+        let album = &args.album;
+
         let thumb = download_thumbnail(url, tmp.path(), *no_verbose)?;
         let cover = tmp.path().join("cover.jpg");
         crop_thumbnail(&thumb, &cover, no_verbose)?;
         logger.info(format!("thumbnail aquired {url}"));
         let mp3 = download_mp3(url, tmp.path(), *no_verbose)?;
         logger.info(format!("downloaded {url}"));
-        tag_mp3(&mp3, &cover, &artist, &title)?;
+
+        let tag_builder: VideoTagger = VideoTagger::new();
+
+        tag_builder
+            .cover(cover)
+            .artist(artist)
+            .title(&title)
+            .album_opt(album.as_deref())
+            .write_to(&mp3)?;
+
         fs::create_dir_all(&args.output)?;
         let final_path = args.output.join(format!("{}.mp3", sanitize(&title)));
         logger.info(format!("tagged {}", final_path.display())); // this is a lie since we

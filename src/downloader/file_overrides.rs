@@ -5,6 +5,7 @@ pub struct UrlEntry {
     pub url: String,
     pub title: Option<String>,
     pub artist: Option<String>,
+    pub album: Option<String>,
 }
 
 pub trait EntryList {
@@ -17,9 +18,10 @@ impl EntryList for [UrlEntry] {
 
         for entry in self {
             let entry_as_string = format!(
-                "{} - {} ({})",
-                entry.title.as_deref().unwrap_or("?"),
-                entry.artist.as_deref().unwrap_or("?"),
+                "{} - {} [{}] ({})",
+                entry.title.as_deref().unwrap_or("[Downloading Title...]"),
+                entry.artist.as_deref().unwrap_or("[Downloading Artist...]"),
+                entry.album.as_deref().unwrap_or("Downloading Album..."),
                 entry.url,
             );
 
@@ -42,6 +44,7 @@ pub fn read_lines(path: &Path) -> anyhow::Result<Vec<String>> {
 pub fn parse_override_line(line: &str) -> UrlEntry {
     let parts: Vec<&str> = line.split('|').map(|p| p.trim()).collect();
     let url = parts.first().copied().unwrap_or("").to_string();
+
     let title = parts
         .get(1)
         .filter(|s| !s.is_empty())
@@ -50,5 +53,15 @@ pub fn parse_override_line(line: &str) -> UrlEntry {
         .get(2)
         .filter(|s| !s.is_empty())
         .map(|s| s.to_string());
-    UrlEntry { url, title, artist }
+    let album = parts
+        .get(3)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string());
+
+    UrlEntry {
+        url,
+        title,
+        artist,
+        album,
+    }
 }
