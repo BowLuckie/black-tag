@@ -29,6 +29,11 @@ sudo pacman -S yt-dlp ffmpeg
 
 ---
 
+## Example usage
+
+```bash
+cargo run -- https://www.youtube.com/watch\?v\=c0BG8XkwzjI\&list\=RDc0BG8XkwzjI\&start_radio\=1 --artist alex\ g -o ~/Music/local\ files --title molly --threads 4 --album molly
+```
 
 ## Disclaimer
 
