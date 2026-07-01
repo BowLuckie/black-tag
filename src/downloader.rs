@@ -12,7 +12,6 @@ mod video;
 use args::DownloaderArgs;
 use audio::download_mp3;
 use clap::Parser;
-use core::panic;
 use file_overrides::{EntryList, UrlEntry, parse_override_line, read_lines};
 use logger::Logger;
 use normalization::{normalize_title, normalize_url, sanitize, strip_noise};
@@ -70,31 +69,7 @@ impl Downloader {
 
         logger.message("Beginning download...");
 
-        let entries: Vec<UrlEntry> = if let Some(file) = &self.args.input_file {
-            let lines = read_lines(file)?;
-            if self.args.file_overrides {
-                lines.iter().map(|l| parse_override_line(l)).collect()
-            } else {
-                lines
-                    .into_iter()
-                    .map(|url| UrlEntry {
-                        url,
-                        title: self.args.title.clone(),
-                        artist: self.args.artist.clone(),
-                        album: self.args.album.clone(),
-                    })
-                    .collect()
-            }
-        } else if let Some(url) = &self.args.url {
-            vec![UrlEntry {
-                url: url.clone(),
-                title: None,
-                artist: None,
-                album: None,
-            }]
-        } else {
-            anyhow::bail!("provide either a url or --input-file");
-        };
+        let entries = self.generate_entries()?;
 
         #[allow(clippy::print_stdout)]
         if !no_verbose {
@@ -142,6 +117,35 @@ impl Downloader {
         logger.info("finished tagged all files");
 
         Ok(())
+    }
+
+    fn generate_entries(&self) -> Result<Vec<UrlEntry>, anyhow::Error> {
+        let entries: Vec<UrlEntry> = if let Some(file) = &self.args.input_file {
+            let lines = read_lines(file)?;
+            if self.args.file_overrides {
+                lines.iter().map(|l| parse_override_line(l)).collect()
+            } else {
+                lines
+                    .into_iter()
+                    .map(|url| UrlEntry {
+                        url,
+                        title: self.args.title.clone(),
+                        artist: self.args.artist.clone(),
+                        album: self.args.album.clone(),
+                    })
+                    .collect()
+            }
+        } else if let Some(url) = &self.args.url {
+            vec![UrlEntry {
+                url: url.clone(),
+                title: None,
+                artist: None,
+                album: None,
+            }]
+        } else {
+            anyhow::bail!("provide either a url or --input-file");
+        };
+        Ok(entries)
     }
 }
 
