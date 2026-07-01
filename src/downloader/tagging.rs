@@ -1,10 +1,9 @@
-use anyhow::Result;
 use id3::frame::{Picture, PictureType};
 use id3::{Tag, TagLike, Version};
 use std::fs;
 use std::path::Path;
 
-pub fn tag_mp3(mp3: &Path, cover: &Path, artist: &str, title: &str) -> Result<()> {
+pub fn tag_mp3(mp3: &Path, cover: &Path, artist: &str, title: &str) -> id3::Result<()> {
     let mut tag = Tag::new();
     tag.set_artist(artist);
     tag.set_title(title);

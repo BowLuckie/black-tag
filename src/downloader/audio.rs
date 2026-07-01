@@ -2,7 +2,13 @@ use anyhow::{Result, bail};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::args::quiet_args;
+pub fn quiet_args(no_verbose: bool) -> &'static [&'static str] {
+    if no_verbose {
+        &["--quiet", "--no-warnings"]
+    } else {
+        &[]
+    }
+}
 
 pub fn download_mp3(url: &str, dir: &Path, no_verbose: bool) -> Result<PathBuf> {
     let output_template = dir.join("audio");
